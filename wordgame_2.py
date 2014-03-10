@@ -187,28 +187,48 @@ def is_valid_word(word, hand, word_list):
 #
 
 def play_hand(hand, word_list):
+    
+    #Initializing Variables Begin
     word_score = 0
     Tot_score = 0
     end_game = False
     start_time = 0
     end_time = 0
     total_time = 0
-    display_hand(hand)
-    while len(hand) > 0:
+    time_limit = 0
+    #Initializing Variables end
+
+    #Prompt the user for a time limit for each player
+
+    readVal(float, "Please enter the time limit, in seconds, for the player", "That is not a valid entry for time! Please enter a floating point value")
+
+    #Exception handling for time limit ^^^
+    
+    print "Your current hand is"  display_hand(hand)    # Display the current hand
+    
+    while len(hand) > 0:    
+            
         while True:
+            
             start_time = time.time()
             word = raw_input("Please enter your word or enter '.' if you wish to end the game ")
             end_time = time.time()
+            
             total_time = end_time - start_time
+            rem_time = time_limit - total_time
+            
             if total_time < 1:
                 total_time = 1          #If it takes less than a second to answer, total time is taken as one second
-            total_time = round(total_time,2)    
+            total_time = round(total_time,2)
+            
             print "It took", total_time, "to enter your word"
+            print "You have ", rem_time, "remaining"
+            
             if word == '.':
                 end_game = True
                 break
-            value = is_valid_word(word, hand, word_list)
-            if value == True:
+            
+            if is_valid_word(word, hand, word_list):
                 break
             else:
                 print "Oops! You made a boo boo. That's not a word. Try again!"
