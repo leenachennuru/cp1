@@ -170,7 +170,7 @@ def is_valid_word(word, hand, word_list):
     word_list: list of lowercase strings
     """
     # TO DO ...
-    value = True
+    value = None
     updated_hand = update_hand(hand, word)
     for a in updated_hand:
         if updated_hand[a] < 0:
@@ -182,6 +182,10 @@ def is_valid_word(word, hand, word_list):
                 value = True
     return value
         
+#Pick the best word
+
+
+
 
 # Playing a hand
 #
@@ -208,59 +212,49 @@ def play_hand(hand, word_list):
     display_hand(hand)                                  # Display the current hand
     
     while len(hand) > 0:    
-            
-        while True:
                 
-            start_time = time.time()                                                                #Begin Time Block
-            word = raw_input("Please enter your word or enter '.' if you wish to end the game ")            
-            end_time = time.time()                                                                  #End Time Block
+        start_time = time.time()                                                                #Begin Time Block
+        word = raw_input("Please enter your word or enter '.' if you wish to end the game ")            
+        end_time = time.time()                                                                  #End Time Block
+        
+        if (word == '.'):                                                                     #Check if the player has ended the game
+            print "You have ended the game"                                                 
+            break
 
-            if ((is_valid_word(word, hand, word_list))):                                            #Check if its a valid word
-                break
+        if not((is_valid_word(word, hand, word_list))):
+            print "Oops! You made a boo boo. That's not a word. Try again!"                   #Check if its a valid word
+        else:
             
-            elif (word == '.'):                                                                     #Check if the player has ended the game
-                end_game = True
+            total_time = end_time - start_time                                                          #Calculate the remaining time
+            rem_time = round(time_limit - total_time, 2)
+                
+            if total_time < 1:
+                total_time = 1          #If it takes less than a second to answer, total time is taken as one second
+            total_time = total_time
+                
+            print "It took", total_time, "to enter your word"
+            print "You have ", rem_time, "remaining"
+
+            if rem_time < 0:                                                                                #Check if the player exceeds his time limit
+                print "You have exceeded your time limit. Your game ends here and unfortunately, your last word can not be scored."
                 break
             
             else:
-                print "Oops! You made a boo boo. That's not a word. Try again!"
+                word_score = round((get_word_score(word, len(hand))/total_time),2)                          #Calculate word score and the total score so far
+                Tot_score = (Tot_score + word_score)
             
-        if end_game == True:                                                                             #Print out a message if the player has ended the game
-            print "You have ended the game"
-            break
-        
-        total_time = end_time - start_time                                                          #Calculate the remaining time
-        rem_time = round(time_limit - total_time, 2)
-
+                hand = update_hand(hand,word)
             
-        if total_time < 1:
-            total_time = 1          #If it takes less than a second to answer, total time is taken as one second
-        total_time = total_time
+                print word, "earned", word_score, "points"
+
+                print "Your total score so far is", Tot_score
             
-        print "It took", total_time, "to enter your word"
-        print "You have ", rem_time, "remaining"
-
-        if rem_time < 0:                                                                                #Check if the player exceeds his time limit
-            print "You have exceeded your time limit. Your game ends here and unfortunately, your last word can not be scored."
-            break
-        
-        
-        else:
-            word_score = round((get_word_score(word, len(hand))/total_time),2)                          #Calculate word score and the total score so far
-            Tot_score = (Tot_score + word_score)
-        
-            hand = update_hand(hand,word)
-        
-            print word, "earned", word_score, "points"
-
-            print "Your total score so far is", Tot_score
-        
-        if len(hand) > 0:
-            print "The remaining letters in your hand is"                                               #Remaining letters in the hand
-            display_hand(hand)
-                
-    else:
-        print "You have used up all the letters in your hand. Your game ends here"
+            if len(hand) > 0:
+                print "The remaining letters in your hand is"                                               #Remaining letters in the hand
+                display_hand(hand)      
+            else:
+                print "You have used up all the letters in your hand. Your game ends here"
+                break
 
     print "Your total score for this game is", Tot_score
 
