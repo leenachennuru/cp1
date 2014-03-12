@@ -5,7 +5,7 @@ from globalfunctions import *
 
 VOWELS = 'aeiou'                                #Define Vowels and Consonents to improve the probality of forming a word from a hand.
 CONSONANTS = 'bcdfghjklmnpqrstvwxyz'
-HAND_SIZE = 7                                    #Variable determining size of the hand
+HAND_SIZE = 9                                   #Variable determining size of the hand
 
 SCRABBLE_LETTER_VALUES = {
     'a': 1, 'b': 3, 'c': 3, 'd': 2, 'e': 1, 'f': 4, 'g': 2, 'h': 4, 'i': 1, 'j': 8, 'k': 5, 'l': 1, 'm': 3, 'n': 1, 'o': 1, 'p': 3, 'q': 10, 'r': 1, 's': 1, 't': 1, 'u': 1, 'v': 4, 'w': 4, 'x': 8, 'y': 4, 'z': 10
@@ -146,7 +146,7 @@ def update_hand(hand, word):                                            # Update
     return updated_hand
 
 #
-# Problem #3: Test word validity
+# Test word validity
 #
 def is_valid_word(word, hand, word_list):
     """
@@ -159,14 +159,14 @@ def is_valid_word(word, hand, word_list):
     word_list: list of lowercase strings
     """
     # TO DO ...
-    value = True
+    value = None
     updated_hand = update_hand(hand, word)
     for a in updated_hand:
-        if updated_hand[a] < 0:                             #If a letter in the word is not present in the hand, return False
+        if updated_hand[a] < 0:
             value = False
             break
     else:
-        for b in word_list:                                 #If a word is not in the word list. Return False
+        for b in word_list:
             if b == word:
                 value = True
     return value
