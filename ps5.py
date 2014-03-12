@@ -7,6 +7,7 @@
 import random
 import string
 from globalfunctions import *
+import time
 
 VOWELS = 'aeiou'
 CONSONANTS = 'bcdfghjklmnpqrstvwxyz'
@@ -17,8 +18,6 @@ SCRABBLE_LETTER_VALUES = {
 }
 
 # -----------------------------------
-# Helper code
-# (you don't need to understand this helper code)
 
 WORDLIST_FILENAME = "words.txt"
 
@@ -54,12 +53,9 @@ def get_frequency_dict(sequence):
         freq[x] = freq.get(x,0) + 1
     return freq
 
-
-# (end of helper code)
 # -----------------------------------
 
-#
-# Problem #1: Scoring a word
+# Scoring a word
 #
 def get_word_score(word, n):
     """
@@ -77,15 +73,12 @@ def get_word_score(word, n):
     returns: int >= 0
     """
     score = 0
-    for a in word:
-        score = score + SCRABBLE_LETTER_VALUES[a]
     if len(word) == n:
-        score += 50
+        score = 50
+    for a in word:
+        score += SCRABBLE_LETTER_VALUES[a]
     return score
-    # TO DO ...
 
-#
-# Make sure you understand how this function works and what it does!
 #
 def display_hand(hand):
     """
@@ -106,7 +99,6 @@ def display_hand(hand):
     return None
 
 #
-# Make sure you understand how this function works and what it does!
 #
 def deal_hand(n):
     """
@@ -133,8 +125,7 @@ def deal_hand(n):
         
     return hand
 
-#
-# Problem #2: Update a hand by removing letters
+#Update a hand by removing letters
 #
 def update_hand(hand, word):
     """
@@ -154,16 +145,18 @@ def update_hand(hand, word):
     """
     # TO DO ...
     updated_hand = {}
-    for letter in hand.keys():
-        updated_hand[letter] = hand.get(letter, 0)          
+    
+    updated_hand = dict(hand)
+    
     for letter in word:
-        updated_hand[letter] = updated_hand.get(letter, 0) - 1
-        if updated_hand[letter] == 0:
+        if updated_hand[letter] == 1:
             del updated_hand[letter]
+        else:
+            updated_hand[letter] = updated_hand.get(letter, 0) - 1
+            
     return updated_hand
 
-#
-# Problem #3: Test word validity
+# Test word validity
 #
 def is_valid_word(word, hand, word_list):
     """
@@ -176,7 +169,7 @@ def is_valid_word(word, hand, word_list):
     word_list: list of lowercase strings
     """
     # TO DO ...
-    value = True
+    value = None
     updated_hand = update_hand(hand, word)
     for a in updated_hand:
         if updated_hand[a] < 0:
@@ -188,51 +181,79 @@ def is_valid_word(word, hand, word_list):
                 value = True
     return value
         
-
-#
-# Problem #4: Playing a hand
-#
-    
+#Pick the best word
+        
 
 def play_hand(hand, word_list):
+    
+    #Initializing Variables Begin
     word_score = 0
     Tot_score = 0
     end_game = False
-    display_hand(hand)
-    while len(hand) > 0:
-        while True:
-            word = raw_input("Please enter your word or enter '.' if you wish to end the game ")
-            if word == '.':
-                end_game = True
-                break
-            value = is_valid_word(word, hand, word_list)
-            if value == True:
-                break
-            else:
-                print "Oops! You made a boo boo. That's not a word. Try again!"
-            
-        if end_game == True:
-            print "Your game has ended"
-            break
-        
-        else:
-            word_score = get_word_score(word, len(hand))
-            Tot_score = Tot_score + word_score
-            hand = update_hand(hand,word)
-            print "The score for the current word is ", word_score
-            print "Your total score so far is", Tot_score
-            if len(hand) > 0:
-                print "The remaining letters in your hand is"
-                display_hand(hand)
+    start_time = 0
+    end_time = 0
+    total_time = 0
+    time_limit = 0
+    #Initializing Variables end
+
+    #Prompt the user for a time limit for each player
+
+    time_limit = readVal(float, "Please enter the time limit, in seconds, for the player", "That is not a valid entry for time! Please enter a floating point value")
+
+    #Exception handling for time limit ^^^
+    
+    print "Your current hand is"
+    display_hand(hand)                                  # Display the current hand
+    
+    while len(hand) > 0:    
                 
-    else:
-        print "You have used up all the letters in your hand. Your game ends here"
+        start_time = time.time()                                                                #Begin Time Block
+        word = raw_input("Please enter your word or enter '.' if you wish to end the game ")            
+        end_time = time.time()                                                                  #End Time Block
+        
+        if (word == '.'):                                                                     #Check if the player has ended the game
+            print "You have ended the game"                                                 
+            break
+
+        if not((is_valid_word(word, hand, word_list))):
+            print "Oops! You made a boo boo. That's not a word. Try again!"                   #Check if its a valid word
+        else:
+            
+            total_time = end_time - start_time                                                          #Calculate the remaining time
+            rem_time = round(time_limit - total_time, 2)
+                
+            if total_time < 1:
+                total_time = 1          #If it takes less than a second to answer, total time is taken as one second
+            total_time = total_time
+                
+            print "It took", total_time, "to enter your word"
+            print "You have ", rem_time, "remaining"
+
+            if rem_time < 0:                                                                                #Check if the player exceeds his time limit
+                print "You have exceeded your time limit. Your game ends here and unfortunately, your last word can not be scored."
+                break
+            
+            else:
+                word_score = round((get_word_score(word, len(hand))/total_time),2)                          #Calculate word score and the total score so far
+                Tot_score = (Tot_score + word_score)
+            
+                hand = update_hand(hand,word)
+            
+                print word, "earned", word_score, "points"
+
+                print "Your total score so far is", Tot_score
+            
+            if len(hand) > 0:
+                print "The remaining letters in your hand is"                                               #Remaining letters in the hand
+                display_hand(hand)      
+            else:
+                print "You have used up all the letters in your hand. Your game ends here"
+                break
 
     print "Your total score for this game is", Tot_score
 
-#
-# Problem #5: Playing a game
-# Make sure you understand how this code works!
+
+# Playing a game
 # 
 def play_game(word_list):
     """
@@ -248,13 +269,13 @@ def play_game(word_list):
     * If the user inputs 'e', exit the game.
 
     * If the user inputs anything else, ask them again.
-    """
+    """ 
 
-    
-    ## uncomment the following block of code once you've completed Problem #4
     hand = deal_hand(HAND_SIZE) # random init
+    
     while True:
         cmd = raw_input('Enter n to deal a new hand, r to replay the last hand, or e to end game: ')
+        
         if cmd == 'n':
             hand = deal_hand(HAND_SIZE)
             play_hand(hand.copy(), word_list)
