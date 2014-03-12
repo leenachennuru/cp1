@@ -12,7 +12,7 @@ import time
 VOWELS = 'aeiou'
 CONSONANTS = 'bcdfghjklmnpqrstvwxyz'
 HAND_SIZE = 7
-
+time_limit = dict()
 SCRABBLE_LETTER_VALUES = {
     'a': 1, 'b': 3, 'c': 3, 'd': 2, 'e': 1, 'f': 4, 'g': 2, 'h': 4, 'i': 1, 'j': 8, 'k': 5, 'l': 1, 'm': 3, 'n': 1, 'o': 1, 'p': 3, 'q': 10, 'r': 1, 's': 1, 't': 1, 'u': 1, 'v': 4, 'w': 4, 'x': 8, 'y': 4, 'z': 10
 }
@@ -58,14 +58,10 @@ def get_frequency_dict(sequence):
 
 # Scoring a word
 #
-def get_word_score(word, n):
+def get_word_score(word):
     """
     Returns the score for a word. Assumes the word is a
     valid word.
-
-    The score for a word is the sum of the points for letters
-    in the word, plus 50 points if all n letters are used on
-    the first go.
 
     Letters are scored as in Scrabble; A is worth 1, B is
     worth 3, C is worth 3, D is worth 2, E is worth 1, and so on.
@@ -76,8 +72,6 @@ def get_word_score(word, n):
     score = 0
     for a in word:
         score = score + SCRABBLE_LETTER_VALUES[a]
-    if len(word) == n:
-        score += 50
     return score
     # TO DO ...
 
@@ -128,6 +122,30 @@ def deal_hand(n):
         hand[x] = hand.get(x, 0) + 1
         
     return hand
+points_dict = dict()
+
+def get_words_to_points(word_list):
+
+    """ Return a dict that maps every word in word_list to its point value."""
+    for word in word_list:
+        points_dict[word] = get_word_score(word)
+    return points_dict
+
+
+#Pick a word from a hand that gives maximum score
+
+
+def pick_best_word(hand, valid_words):
+    
+    """ Return the highest scoring word from points_dict
+    that can be made with the given hand.
+    Return '.' if no words can be made with the given hand.
+    """
+    max_score = max(valid_words.values())
+    for word in valid_words:
+        if valid_words[word] == max_score:
+            best_word = valid_words[word]
+    return best_word
 
 # Update a hand by removing letters
 #
@@ -153,13 +171,13 @@ def update_hand(hand, word):
         updated_hand[letter] = hand.get(letter, 0)          
     for letter in word:
         updated_hand[letter] = updated_hand.get(letter, 0) - 1
-        if updated_hand[letter] == 0:
-            del updated_hand[letter]
+##        if updated_hand[letter] == 0:
+##            del updated_hand[letter]
     return updated_hand
 
 # Test word validity
 #
-def is_valid_word(word, hand, word_list):
+def is_valid_word(word, hand):
     """
     Returns True if word is in the word_list and is entirely
     composed of letters in the hand. Otherwise, returns False.
@@ -170,19 +188,37 @@ def is_valid_word(word, hand, word_list):
     word_list: list of lowercase strings
     """
     # TO DO ...
-    value = None
+    value = True
     updated_hand = update_hand(hand, word)
     for a in updated_hand:
         if updated_hand[a] < 0:
             value = False
             break
-    else:
-        for b in word_list:
-            if b == word:
-                value = True
     return value
-        
-#Pick the best word
+
+def valid_words_dict(hand, points_dict):
+    valid_words = dict()
+    for word in points_dict:
+        print word
+        if (is_valid_word(word, hand)):
+            valid_words[word] = points_dict[word]
+    return valid_words
+
+
+def get_time_limit(points_dict, k):
+    
+    """Return the time limit for the computer player as a function of the
+    multiplier k.
+    points_dict should be the same dictionary that is created by
+    get_words_to_points.
+    """
+    
+    start_time = time.time()
+    for word in points_dict:
+        get_frequency_dict(word)
+        get_word_score(word, HAND_SIZE)
+    end_time = time.time()
+    return (end_time - start_time) * k
 
 
 
@@ -190,7 +226,7 @@ def is_valid_word(word, hand, word_list):
 # Playing a hand
 #
 
-def play_hand(hand, word_list):
+def play_hand(hand, points_dict):
     
     #Initializing Variables Begin
     word_score = 0
@@ -212,42 +248,35 @@ def play_hand(hand, word_list):
     display_hand(hand)                                  # Display the current hand
     
     while len(hand) > 0:    
-                
         start_time = time.time()                                                                #Begin Time Block
-        word = raw_input("Please enter your word or enter '.' if you wish to end the game ")            
+        valid_words = valid_words_dict(hand, points_dict)
+        print valid_words
+        word = pick_best_word(hand,valid_words)            
         end_time = time.time()                                                                  #End Time Block
-        
-        if (word == '.'):                                                                     #Check if the player has ended the game
-            print "You have ended the game"                                                 
+
+        total_time = end_time - start_time                                                          #Calculate the remaining time
+        rem_time = round(time_limit - total_time, 2)
+                
+        if total_time < 1:
+            total_time = 1          #If it takes less than a second to answer, total time is taken as one second
+        total_time = total_time
+                
+        print "It took", total_time, "to enter your word"
+        print "You have ", rem_time, "remaining"
+
+        if rem_time < 0:                                                                                #Check if the player exceeds his time limit
+            print "You have exceeded your time limit. Your game ends here and unfortunately, your last word can not be scored."
             break
-
-        if not((is_valid_word(word, hand, word_list))):
-            print "Oops! You made a boo boo. That's not a word. Try again!"                   #Check if its a valid word
+            
         else:
-            
-            total_time = end_time - start_time                                                          #Calculate the remaining time
-            rem_time = round(time_limit - total_time, 2)
-                
-            if total_time < 1:
-                total_time = 1          #If it takes less than a second to answer, total time is taken as one second
-            total_time = total_time
-                
-            print "It took", total_time, "to enter your word"
-            print "You have ", rem_time, "remaining"
+            word_score = round(points_dict[word]/total_time,2)                          #Calculate word score and the total score so far
+            Tot_score = (Tot_score + word_score)
+        
+            hand = update_hand(hand,word)
+        
+            print word, "earned", word_score, "points"
 
-            if rem_time < 0:                                                                                #Check if the player exceeds his time limit
-                print "You have exceeded your time limit. Your game ends here and unfortunately, your last word can not be scored."
-                break
-            
-            else:
-                word_score = round((get_word_score(word, len(hand))/total_time),2)                          #Calculate word score and the total score so far
-                Tot_score = (Tot_score + word_score)
-            
-                hand = update_hand(hand,word)
-            
-                print word, "earned", word_score, "points"
-
-                print "Your total score so far is", Tot_score
+            print "Your total score so far is", Tot_score
             
             if len(hand) > 0:
                 print "The remaining letters in your hand is"                                               #Remaining letters in the hand
@@ -258,9 +287,9 @@ def play_hand(hand, word_list):
 
     print "Your total score for this game is", Tot_score
 
-# Playing a game
-# 
-def play_game(word_list):
+## Playing a game
+ 
+def play_game(points_dict):
     """
     Allow the user to play an arbitrary number of hands.
 
@@ -281,20 +310,23 @@ def play_game(word_list):
         cmd = raw_input('Enter n to deal a new hand, r to replay the last hand, or e to end game: ')
         if cmd == 'n':
             hand = deal_hand(HAND_SIZE)
-            play_hand(hand.copy(), word_list)
+            play_hand(hand.copy(), points_dict)
             print
         elif cmd == 'r':
-            play_hand(hand.copy(), word_list)
+            play_hand(hand.copy(), points_dict)
             print
         elif cmd == 'e':
             break
         else:
             print "Invalid command."
 
-#
-# Build data structures used for entire session and play game
-#
+
+## Build data structures used for entire session and play game
+
 if __name__ == '__main__':
     word_list = load_words()
+    points_dict = get_words_to_points(word_list)
+    for word in points_dict:
+        print word, points_dict[word]
     play_game(word_list)
 
