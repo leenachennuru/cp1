@@ -123,12 +123,97 @@ def deal_hand(n):
         
     return hand
 
+# Create a dict to match each word with its score
+
 def get_words_to_points(word_list):
     points_dict = {}
     """ Return a dict that maps every word in word_list to its point value."""
+    
     for word in word_list:
         points_dict[word] =  get_word_score(word)
+        
     return points_dict
+
+def merge(left, right):
+    
+    """Assumes left and right are sorted lists.
+    Returns a new sorted string containing the same elements
+    as (left + right) would contain."""
+    
+    result = ''
+    i,j = 0,0
+    
+    while i < len(left) and j < len(right):
+        if left[i] < right [j]:
+            result = result + left[i]
+            i = i + 1
+        elif left[i] > right[j]:
+            result = result + right[j]
+            j = j + 1
+        else:
+            result = result+ left[i]
+            result = result+ right[j]
+            i = i + 1
+            j = j + 1
+            
+    while i < len(left):
+        result = result + left[i]
+        i = i + 1
+        
+    while j < len(right):
+        result = result + right[j]
+        j = j + 1
+        
+    return result
+
+def mergesort(L):
+    
+    """Returns a new sorted list with the same elements as L"""
+
+    if len(L) < 2:
+        return L[:]
+    else:
+        middle = len(L)/2
+        left = mergesort(L[:middle])
+        right = mergesort(L[middle:])
+        together = merge(left,right)
+        return together
+    
+    
+        
+#Create word arrangements from word list
+
+def get_word_rearrangements(word_list):
+    rearranged_dict = {}
+    for word in word_list:
+        rearranged_dict[mergesort(word)] = word
+    return rearranged_dict
+
+def pick_best_word_faster(hand):
+    best_word = ''
+    str_hand = ''
+    for letter in hand.keys():
+        for j in range(hand[letter]):
+            str_hand += letter
+    score_store = {}
+    
+
+
+        
+        for string in rearranged_dict.keys():
+            if subset_string == string:
+                score_store[rearranged_dict[string]] = get_word_score(rearranged_dict[string])
+                break
+            else:
+                print "There are no words available with this hand. Your game ends here"
+                break
+    print score_store
+    for word in score_store.keys():
+        if score_store[word] == max(score_store.values()):
+            best_word = word
+            break
+    return best_word
+        
 
 # Update a hand by removing letters
 #
@@ -176,6 +261,7 @@ def is_valid_word(word, hand):
             value = False
             break
     return value
+
 
 def valid_words_dict(hand, points_dict):
     valid_words = {}
@@ -245,49 +331,44 @@ def play_hand(hand, points_dict):
     
     while len(hand) > 0:    
         start_time = time.time()                                                                #Begin Time Block
-        valid_words = valid_words_dict(hand, points_dict)
-        if len(valid_words) == 0:
-            print "There are no words available with this hand. Your game ends here"
+            
+        word = pick_best_word_faster(hand)
+        end_time = time.time()                                                                  #End Time Block
+
+        total_time = round(end_time - start_time,2)                                                          #Calculate the remaining time
+        rem_time = round(time_limit - total_time, 2)
+                
+        if total_time < 1:
+            total_time = 1          #If it takes less than a second to answer, total time is taken as one second
+        total_time = total_time
+
+        print "The computer picked", word        
+        print "It took", total_time, "to enter your word"
+        print "You have ", rem_time, "remaining"
+
+        if rem_time < 0:                                                                                #Check if the player exceeds his time limit
+            print "You have exceeded your time limit. Your game ends here and unfortunately, your last word can not be scored."
             break
+            
         else:
+            word_score = points_dict[word]/total_time                          
+            Tot_score = (Tot_score + word_score)
+        
+            hand = update_hand(hand,word)
+            for letter in word:
+                if hand[letter] == 0:
+                    del hand[letter]
+
+            print word, "earned", word_score, "points"
+
+            print "Your total score so far is", Tot_score
             
-            word = pick_best_word(hand,valid_words)
-            end_time = time.time()                                                                  #End Time Block
-
-            total_time = round(end_time - start_time,2)                                                          #Calculate the remaining time
-            rem_time = round(time_limit - total_time, 2)
-                    
-            if total_time < 1:
-                total_time = 1          #If it takes less than a second to answer, total time is taken as one second
-            total_time = total_time
-
-            print "The computer picked", word        
-            print "It took", total_time, "to enter your word"
-            print "You have ", rem_time, "remaining"
-
-            if rem_time < 0:                                                                                #Check if the player exceeds his time limit
-                print "You have exceeded your time limit. Your game ends here and unfortunately, your last word can not be scored."
-                break
-                
+            if len(hand) > 0:
+                print "The remaining letters in your hand is"                                               #Remaining letters in the hand
+                display_hand(hand)      
             else:
-                word_score = round(points_dict[word]/total_time,2)                          #Calculate word score and the total score so far,2)
-                Tot_score = (Tot_score + word_score)
-            
-                hand = update_hand(hand,word)
-                for letter in word:
-                    if hand[letter] == 0:
-                        del hand[letter]
-
-                print word, "earned", word_score, "points"
-
-                print "Your total score so far is", Tot_score
-                
-                if len(hand) > 0:
-                    print "The remaining letters in your hand is"                                               #Remaining letters in the hand
-                    display_hand(hand)      
-                else:
-                    print "You have used up all the letters in your hand. Your game ends here"
-                    break
+                print "You have used up all the letters in your hand. Your game ends here"
+                break
 
     print "Your total score for this game is", Tot_score
 
@@ -330,5 +411,7 @@ def play_game(points_dict):
 if __name__ == '__main__':
     word_list = load_words()
     points_dict = get_words_to_points(word_list)
+    rearranged_dict = get_word_rearrangements(word_list)
+    print rearranged_dict['adn']
     play_game(points_dict)
 
